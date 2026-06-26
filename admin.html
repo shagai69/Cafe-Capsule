@@ -111,4 +111,280 @@ let ST={
  loading:false,modal:null,
 };
 
-function showToast(txt,bg
+function showToast(txt,bg="#22c55e"){
+ const t=document.createElement("div");
+ t.style.cssText=`position:fixed;top:20px;left:50%;transform:translateX(-50%);background:${bg};color:#fff;padding:10px 24px;border-radius:30px;font-weight:700;font-size:14px;z-index:9999;font-family:'Segoe UI',sans-serif`;
+ t.textContent=txt;document.body.appendChild(t);setTimeout(()=>t.remove(),3500);
+}
+
+onAuthStateChanged(auth,async user=>{
+ ST.user=user;
+ if(user){ST.screen="main";ST.loading=true;render();await loadData();ST.loading=false;render();}
+ else{ST.screen="login";render();}
+});
+
+async function loadData(){
+ const p=getPeriods(ST.year,ST.month)[ST.periodIdx];
+ [ST.cfg,ST.recs]=await Promise.all([getCfg(),getPeriodRecs(p.start,p.end)]);
+}
+
+function render(){
+ const app=document.getElementById("app");
+ const{screen,tab,recs,cfg,loading,modal,loginErr,year,month,periodIdx}=ST;
+ const HOURLY=cfg.hourlyRate||7000;
+ const periods=getPeriods(year,month);
+
+ const byName={};
+ recs.forEach(r=>{
+   if(!byName[r.name])byName[r.name]={name:r.name,hours:0,days:0};
+   byName[r.name].hours+=totalH(r);
+   if(hasData(r))byName[r.name].days++;
+ });
+ const summary=Object.values(byName).sort((a,b)=>a.name.localeCompare(b.name));
+ const grandH=summary.reduce((s,e)=>s+e.hours,0);
+
+ let modalHtml="";
+ if(modal){
+   if(modal.type==="edit"||modal.type==="add"){
+     const r=modal.data||{};
+     const isAdd=modal.type==="add";
+     const inT=getInTime(r)||"";
+     const outT=getOutTime(r)||"";
+     modalHtml=`<div class="modal-overlay" id="mOverlay">
+       <div class="modal-box">
+         <h2 style="margin-bottom:12px;color:#3d2c1e">${isAdd?"➕ Бүртгэл нэмэх":"✏️ Бүртгэл засах"}</h2>
+         <label>Ажилтны нэр</label>
+         <input type="text" id="mName" value="${r.name||""}" placeholder="Нэр"/>
+         ${isAdd?`<label>Огноо</label><input type="date" id="mDate" value="${r.fullDate||""}"/>`:`<p style="color:#a07850;font-size:13px;margin-bottom:12px">Огноо: <strong>${r.fullDate||""}</strong></p>`}
+         <label>✅ Ирсэн цаг</label>
+         <input type="time" id="mIn" value="${inT}"/>
+         <label>👋 Явсан цаг</label>
+         <input type="time" id="mOut" value="${outT}"/>
+         <div class="flex" style="margin-top:4px">
+           <button class="btn btn-dark" style="flex:1" id="mSave">${isAdd?"Нэмэх":"Хадгалах"}</button>
+           <button class="btn btn-light" style="flex:1" id="mCancel">Болих</button>
+         </div>
+       </div>
+     </div>`;
+   }
+   if(modal.type==="setup"){
+     const c=modal.data||cfg;
+     modalHtml=`<div class="modal-overlay" id="mOverlay">
+       <div class="modal-box">
+         <h2 style="margin-bottom:12px;color:#3d2c1e">⚙️ Тохиргоо</h2>
+         <label>Цэсний нэр</label>
+         <input type="text" id="cfgTitle" value="${c.title||""}"/>
+         <label>Цагийн тариф (₮/цаг)</label>
+         <input type="number" id="cfgRate" value="${c.hourlyRate||7000}"/>
+         <div class="flex" style="margin-top:4px">
+           <button class="btn btn-dark" style="flex:1" id="cfgSave">Хадгалах</button>
+           <button class="btn btn-light" style="flex:1" id="cfgCancel">Болих</button>
+         </div>
+       </div>
+     </div>`;
+   }
+ }
+
+ if(screen==="loading"){
+   app.innerHTML=`<div class="card"><div style="text-align:center;padding:40px"><span class="spinner"></span></div></div>`;
+   return;
+ }
+
+ if(screen==="login"){
+   app.innerHTML=`${modalHtml}<div class="card" style="max-width:400px;margin:80px auto">
+     <h1 style="margin-bottom:4px">🔐 Админ нэвтрэх</h1>
+     <p style="color:#a07850;font-size:13px;margin-bottom:20px">Ирцийн удирдлагын систем</p>
+     <label>И-мэйл</label>
+     <input type="email" id="emailIn" value="${ST.email}" placeholder="admin@example.com"/>
+     <label>Нууц үг</label>
+     <input type="password" id="passIn" placeholder="••••••"/>
+     ${loginErr?`<p class="err">${loginErr}</p>`:""}
+     <button class="btn btn-dark" style="width:100%" id="loginBtn">${loading?`<span class="spinner"></span>`:"Нэвтрэх"}</button>
+   </div>`;
+   document.getElementById("emailIn").oninput=e=>ST.email=e.target.value;
+   document.getElementById("passIn").oninput=e=>{ST.pass=e.target.value;ST.loginErr="";};
+   document.getElementById("passIn").onkeydown=e=>{if(e.key==="Enter")doLogin();};
+   document.getElementById("loginBtn").onclick=doLogin;
+   setTimeout(()=>document.getElementById(ST.email?"passIn":"emailIn")?.focus(),30);
+   return;
+ }
+
+ const mOpts=Array.from({length:12},(_,i)=>{const m=i+1;return`<option value="${m}" ${m===month?"selected":""}>${m}-р сар</option>`;}).join("");
+ const yOpts=[year-1,year,year+1].map(y=>`<option value="${y}" ${y===ST.year?"selected":""}>${y}</option>`).join("");
+
+ const tableRows=recs.length===0
+   ?`<tr><td colspan="8" style="text-align:center;color:#aaa;padding:24px">${loading?"Ачааллаж байна...":"Бүртгэл байхгүй"}</td></tr>`
+   :recs.map((r,i)=>{
+     const h=totalH(r);
+     const inT=getInTime(r);
+     const outT=getOutTime(r);
+     const warn=isIncomplete(r);
+     return`<tr style="background:${i%2===0?"#fff":"#faf8f6"}">
+       <td>${r.fullDate}</td>
+       <td>${r.day||""}</td>
+       <td style="font-weight:700">${r.name} ${warn?`<span class="badge-warn">дутуу</span>`:""}</td>
+       <td style="color:#22c55e;font-weight:600">${inT||"—"}</td>
+       <td style="color:#ef4444;font-weight:600">${outT||"—"}</td>
+       <td>${h>0?fmtH(h):"—"}</td>
+       <td style="font-weight:600;color:#15803d">${h>0?Math.round(h*HOURLY).toLocaleString()+"₮":"—"}</td>
+       <td><div class="flex">
+         <button class="btn-blue" data-edit="${r.id}">Засах</button>
+         <button class="btn-red" data-del="${r.id}">Устгах</button>
+       </div></td>
+     </tr>`;
+   }).join("");
+
+ app.innerHTML=`${modalHtml}
+ <div class="card">
+   <div class="flex" style="margin-bottom:16px">
+     <h1>📋 ${cfg.title} — Админ</h1>
+     <div class="spacer"></div>
+     <button class="btn btn-light" id="cfgBtn">⚙️</button>
+     <button class="btn btn-light" id="logoutBtn">Гарах</button>
+   </div>
+   <div class="tab-bar">
+     <button class="tab ${tab==="records"?"active":""}" data-tab="records">📅 Бүртгэл</button>
+     <button class="tab ${tab==="summary"?"active":""}" data-tab="summary">👥 Хураангуй</button>
+     <button class="tab ${tab==="salary"?"active":""}" data-tab="salary">💰 Цалин</button>
+   </div>
+   <div class="flex" style="margin-bottom:10px;gap:6px">
+     <select id="yearSel">${yOpts}</select>
+     <select id="monthSel">${mOpts}</select>
+     <div class="spacer"></div>
+     <button class="btn btn-light" id="addBtn">➕ Нэмэх</button>
+     <button class="btn btn-dark" id="csvBtn">⬇ CSV</button>
+   </div>
+   <div class="period-tabs">
+     <button class="period-tab ${periodIdx===0?"active":""}" data-pidx="0">${periods[0].label}</button>
+     <button class="period-tab ${periodIdx===1?"active":""}" data-pidx="1">${periods[1].label}</button>
+   </div>
+   ${loading?`<div style="text-align:center;padding:20px"><span class="spinner"></span> Ачааллаж байна...</div>`:""}
+   ${tab==="records"&&!loading?`
+     <div class="overflow-x"><table>
+       <thead><tr>
+         <th>Огноо</th><th>Гараг</th><th>Нэр</th>
+         <th>✅ Ирсэн</th><th>👋 Явсан</th>
+         <th>Нийт цаг</th><th>Цалин</th><th></th>
+       </tr></thead>
+       <tbody>${tableRows}</tbody>
+     </table></div>`:""}
+   ${tab==="summary"&&!loading?`
+     <div class="sum-grid">
+       ${summary.map(e=>`<div class="sum-card" style="background:#f8f4f0">
+         <div style="font-weight:700;color:#3d2c1e;margin-bottom:2px">${e.name}</div>
+         <div style="font-size:12px;color:#a07850">${e.days} өдөр · ${fmtH(e.hours)}</div>
+         <div style="font-size:18px;font-weight:800;color:#15803d;margin-top:2px">${Math.round(e.hours*HOURLY).toLocaleString()}₮</div>
+       </div>`).join("")}
+       ${summary.length>0?`<div class="sum-card" style="background:#3d2c1e">
+         <div style="font-weight:700;color:#c8a882;margin-bottom:2px">Нийт</div>
+         <div style="font-size:12px;color:#a07850">${fmtH(grandH)}</div>
+         <div style="font-size:18px;font-weight:800;color:#fff;margin-top:2px">${Math.round(grandH*HOURLY).toLocaleString()}₮</div>
+       </div>`:""}
+       ${summary.length===0?`<p style="color:#aaa;font-size:13px">Бүртгэл байхгүй</p>`:""}
+     </div>`:""}
+   ${tab==="salary"&&!loading?`
+     <div class="overflow-x"><table>
+       <thead><tr><th>Ажилтан</th><th>Өдөр</th><th>Нийт цаг</th><th>Тариф</th><th>Олгох цалин</th></tr></thead>
+       <tbody>
+         ${summary.length===0?`<tr><td colspan="5" style="text-align:center;color:#aaa;padding:24px">Бүртгэл байхгүй</td></tr>`
+           :summary.map((e,i)=>`<tr style="background:${i%2===0?"#fff":"#faf8f6"}">
+             <td style="font-weight:700">${e.name}</td>
+             <td>${e.days}</td><td>${fmtH(e.hours)}</td>
+             <td>${HOURLY.toLocaleString()}₮</td>
+             <td style="font-weight:800;color:#15803d;font-size:15px">${Math.round(e.hours*HOURLY).toLocaleString()}₮</td>
+           </tr>`).join("")}
+         ${summary.length>0?`<tr style="background:#3d2c1e">
+           <td colspan="2" style="color:#c8a882;font-weight:800">Нийт олгох</td>
+           <td style="color:#fff">${fmtH(grandH)}</td><td></td>
+           <td style="color:#fff;font-size:16px;font-weight:800">${Math.round(grandH*HOURLY).toLocaleString()}₮</td>
+         </tr>`:""}
+       </tbody>
+     </table></div>`:""}
+ </div>`;
+
+ document.querySelectorAll(".tab[data-tab]").forEach(b=>b.onclick=()=>{ST.tab=b.dataset.tab;render();});
+ document.getElementById("logoutBtn").onclick=()=>signOut(auth);
+ document.getElementById("cfgBtn").onclick=()=>{ST.modal={type:"setup",data:{...cfg}};render();};
+ document.getElementById("addBtn").onclick=()=>{ST.modal={type:"add",data:{fullDate:new Date().toISOString().split("T")[0]}};render();};
+ document.getElementById("csvBtn").onclick=exportCSV;
+ document.getElementById("yearSel").onchange=async e=>{ST.year=Number(e.target.value);ST.loading=true;render();await loadData();ST.loading=false;render();};
+ document.getElementById("monthSel").onchange=async e=>{ST.month=Number(e.target.value);ST.loading=true;render();await loadData();ST.loading=false;render();};
+ document.querySelectorAll(".period-tab[data-pidx]").forEach(b=>b.onclick=async()=>{ST.periodIdx=Number(b.dataset.pidx);ST.loading=true;render();await loadData();ST.loading=false;render();});
+ document.querySelectorAll("[data-edit]").forEach(b=>b.onclick=()=>{const rec=recs.find(r=>r.id===b.dataset.edit);if(rec){ST.modal={type:"edit",data:{...rec}};render();}});
+ document.querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>doDelete(b.dataset.del));
+ if(modal){
+   document.getElementById("mCancel")?.addEventListener("click",()=>{ST.modal=null;render();});
+   document.getElementById("cfgCancel")?.addEventListener("click",()=>{ST.modal=null;render();});
+   document.getElementById("mSave")?.addEventListener("click",doSaveRec);
+   document.getElementById("cfgSave")?.addEventListener("click",doSaveCfg);
+   document.getElementById("mOverlay")?.addEventListener("click",e=>{if(e.target.id==="mOverlay"){ST.modal=null;render();}});
+ }
+}
+
+async function doLogin(){
+ ST.loginErr="";ST.loading=true;render();
+ try{await signInWithEmailAndPassword(auth,ST.email,ST.pass);}
+ catch(e){
+   ST.loading=false;
+   ST.loginErr=["auth/invalid-credential","auth/wrong-password","auth/user-not-found"].includes(e.code)?"И-мэйл эсвэл нууц үг буруу":"Алдаа: "+e.message;
+   render();
+ }
+}
+
+async function doSaveRec(){
+ const isAdd=ST.modal.type==="add";
+ const name=document.getElementById("mName")?.value.trim();
+ const inT=document.getElementById("mIn")?.value||null;
+ const outT=document.getElementById("mOut")?.value||null;
+ if(!name){showToast("Нэр оруулна уу","#ef4444");return;}
+ let fullDate=ST.modal.data.fullDate;
+ if(isAdd){fullDate=document.getElementById("mDate")?.value;if(!fullDate){showToast("Огноо оруулна уу","#ef4444");return;}}
+ const d=new Date(fullDate);
+ const date=`${d.getMonth()+1}/${d.getDate()}`;
+ const day=DAYS[d.getDay()];
+ const oldId=`${fullDate}__${ST.modal.data.name||name}`;
+ const newId=`${fullDate}__${name}`;
+ const data={name,fullDate,date,day};
+ if(inT)data.morningIn=inT;
+ if(outT)data.morningOut=outT;
+ try{
+   if(!isAdd&&oldId!==newId)await deleteDoc(doc(db,"attendance",oldId));
+   await setDoc(doc(db,"attendance",newId),data);
+   ST.modal=null;ST.loading=true;render();await loadData();ST.loading=false;
+   showToast(isAdd?"Нэмэгдлээ ✓":"Хадгалагдлаа ✓");render();
+ }catch(e){showToast("Алдаа: "+e.message,"#ef4444");}
+}
+
+async function doDelete(id){
+ if(!confirm("Энэ бүртгэлийг устгах уу?"))return;
+ try{
+   await deleteDoc(doc(db,"attendance",id));
+   ST.loading=true;render();await loadData();ST.loading=false;
+   showToast("Устгагдлаа","#f59e0b");render();
+ }catch(e){showToast("Алдаа: "+e.message,"#ef4444");}
+}
+
+async function doSaveCfg(){
+ const title=document.getElementById("cfgTitle")?.value.trim()||"Цэс";
+ const hourlyRate=Number(document.getElementById("cfgRate")?.value)||7000;
+ try{
+   await setDoc(doc(db,"config","main"),{title,hourlyRate});
+   ST.cfg={title,hourlyRate};ST.modal=null;
+   showToast("Тохиргоо хадгалагдлаа ✓");render();
+ }catch(e){showToast("Алдаа: "+e.message,"#ef4444");}
+}
+
+function exportCSV(){
+ const HOURLY=ST.cfg.hourlyRate||7000;
+ const hdr="Огноо,Гараг,Нэр,Ирсэн,Явсан,Нийт цаг,Цалин (₮)";
+ const lines=ST.recs.map(r=>{const h=totalH(r);return`${r.fullDate},${r.day||""},${r.name},${getInTime(r)||""},${getOutTime(r)||""},${h.toFixed(2)},${Math.round(h*HOURLY)}`;});
+ const csv=[hdr,...lines].join("\n");
+ const blob=new Blob(["\uFEFF"+csv],{type:"text/csv;charset=utf-8;"});
+ const url=URL.createObjectURL(blob);
+ const a=document.createElement("a");
+ a.href=url;a.download=`ирц_${ST.year}-${ST.month}_${ST.periodIdx===0?"1-15":"16-сүүл"}.csv`;a.click();
+ URL.revokeObjectURL(url);
+}
+</script>
+</body>
+</html>
