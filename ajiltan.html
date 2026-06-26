@@ -17,7 +17,7 @@
  h1{font-size:22px;font-weight:800;color:#3d2c1e;margin-bottom:4px}
  .sub{color:#a07850;font-size:13px;margin-bottom:20px}
  label{display:block;font-size:11px;font-weight:700;color:#a07850;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px}
- input[type=text]{width:100%;padding:11px 13px;border-radius:10px;border:2px solid #e8ddd4;font-size:16px;margin-bottom:12px;outline:none;color:#3d2c1e;font-family:inherit}
+ input[type=text],input[type=password]{width:100%;padding:11px 13px;border-radius:10px;border:2px solid #e8ddd4;font-size:16px;margin-bottom:12px;outline:none;color:#3d2c1e;font-family:inherit}
  .btn-primary{width:100%;padding:13px;background:#3d2c1e;color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit}
  .btn-ghost{padding:10px 16px;background:#f0e8e0;color:#3d2c1e;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
@@ -36,8 +36,6 @@
  .period-tab.active{background:#3d2c1e;color:#fff}
  .spinner{display:inline-block;width:20px;height:20px;border:2px solid #e8ddd4;border-top-color:#3d2c1e;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle}
  @keyframes spin{to{transform:rotate(360deg)}}
- .install-bar{background:#3d2c1e;color:#fff;padding:10px 16px;border-radius:12px;display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;font-size:13px}
- .install-btn{background:#fff;color:#3d2c1e;border:none;border-radius:8px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer}
 </style>
 </head>
 <body>
@@ -55,22 +53,27 @@ const firebaseConfig = {
  appId:             "1:990981947127:web:86d4ecd4e7ec2c1aa7ddf2"
 };
 
-const TG_TOKEN   = "8684701151:AAEGEfkbiypPxEAAIz_WEwiVkcoqRUVG5mY";
 const TG_CHAT_ID = "8903339382";
-
-async function sendTelegram(text){
- try{
-   await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`,{
-     method:"POST",
-     headers:{"Content-Type":"application/json"},
-     body:JSON.stringify({chat_id:TG_CHAT_ID,text,parse_mode:"HTML"})
-   });
- }catch(e){console.log("Telegram error:",e);}
-}
 
 const fapp=initializeApp(firebaseConfig);
 const db=getFirestore(fapp);
 const DAYS=["Ня","Да","Мя","Лх","Пү","Ба","Бя"];
+
+async function getTgToken(){
+ try{const s=await getDoc(doc(db,"config","tg"));return s.exists()?s.data().token:null;}
+ catch{return null;}
+}
+async function sendTelegram(text){
+ const token=await getTgToken();
+ if(!token)return;
+ try{
+   await fetch(`https://api.telegram.org/bot${token}/sendMessage`,{
+     method:"POST",
+     headers:{"Content-Type":"application/json"},
+     body:JSON.stringify({chat_id:TG_CHAT_ID,text,parse_mode:"HTML"})
+   });
+ }catch(e){console.log("TG error:",e);}
+}
 
 function getToday(){
  const d=new Date();
@@ -146,10 +149,7 @@ async function doCheckIn(name,type){
  return now;
 }
 
-let deferredPrompt=null;
-window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;render();});
-
-let ST={screen:"name",name:"",cfg:{title:"Цэс",hourlyRate:7000},todayRec:{},periodRecs:[],periodIdx:0,loading:false,checkedIn:null};
+let ST={screen:"loading",name:"",cfg:{title:"Цэс",hourlyRate:7000},todayRec:{},periodRecs:[],periodIdx:0,loading:false,checkedIn:null,hasTg:false};
 
 function showToast(txt,bg="#22c55e"){
  const t=document.createElement("div");
@@ -157,14 +157,25 @@ function showToast(txt,bg="#22c55e"){
  t.textContent=txt;document.body.appendChild(t);setTimeout(()=>t.remove(),3000);
 }
 
-async function init(){ST.cfg=await getCfg();render();}
+async function init(){
+ ST.cfg=await getCfg();
+ const tg=await getTgToken();
+ ST.hasTg=!!tg;
+ ST.screen="name";
+ render();
+}
 
 async function render(){
  const app=document.getElementById("app");
- const{cfg,screen,name,todayRec,periodRecs,periodIdx,loading,checkedIn}=ST;
+ const{cfg,screen,name,todayRec,periodRecs,periodIdx,loading,checkedIn,hasTg}=ST;
  const HOURLY=cfg.hourlyRate||7000;
  const today=getToday();
  const periods=getPeriods(today.fullDate);
+
+ if(screen==="loading"){
+   app.innerHTML=`<div style="text-align:center;padding:40px"><span class="spinner"></span></div>`;
+   return;
+ }
 
  if(checkedIn){
    app.innerHTML=`<div class="success-card">
@@ -172,15 +183,13 @@ async function render(){
      <div style="font-size:22px;font-weight:800;color:#3d2c1e;margin:10px 0 6px">${checkedIn.name}</div>
      <div style="font-size:18px;font-weight:700;color:#a07850">${checkedIn.type==="in"?"Ирлээ":"Явлаа"}</div>
      <div style="font-size:15px;color:#c8a882;margin-top:4px">${checkedIn.time}</div>
-     <div style="font-size:12px;color:#22c55e;margin-top:8px">📨 Админд мэдэгдэл илгээгдлээ</div>
+     ${hasTg?`<div style="font-size:12px;color:#22c55e;margin-top:8px">📨 Админд мэдэгдэл илгээгдлээ</div>`:""}
    </div>`;
    return;
  }
 
  if(screen==="name"){
-   const installBar=deferredPrompt?`<div class="install-bar"><span>📱 Апп болгож суулгах</span><button class="install-btn" id="installBtn">Суулгах</button></div>`:"";
    app.innerHTML=`
-     ${installBar}
      <h1>☕ ${cfg.title}</h1>
      <p class="sub">${today.date} · ${today.day}</p>
      <label>Нэрээ бичнэ үү</label>
@@ -190,13 +199,6 @@ async function render(){
    inp.focus();
    inp.onkeydown=e=>{if(e.key==="Enter")confirmName();};
    document.getElementById("nextBtn").onclick=confirmName;
-   document.getElementById("installBtn")?.addEventListener("click",async()=>{
-     if(!deferredPrompt)return;
-     deferredPrompt.prompt();
-     const{outcome}=await deferredPrompt.userChoice;
-     if(outcome==="accepted"){deferredPrompt=null;showToast("Апп суулгагдлаа ✓");}
-     render();
-   });
    return;
  }
 
