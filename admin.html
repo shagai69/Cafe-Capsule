@@ -7,7 +7,7 @@
 <style>
   *{box-sizing:border-box;margin:0;padding:0}
   body{min-height:100vh;background:linear-gradient(135deg,#1a1108,#2d1f0e);font-family:'Segoe UI',system-ui,sans-serif;display:flex;align-items:flex-start;justify-content:center;padding:20px 16px}
-  .card{background:#fff;border-radius:20px;padding:24px 22px;width:100%;max-width:1000px;box-shadow:0 8px 40px rgba(0,0,0,.3)}
+  .card{background:#fff;border-radius:20px;padding:24px 22px;width:100%;max-width:860px;box-shadow:0 8px 40px rgba(0,0,0,.3)}
   h1{font-size:20px;font-weight:800;color:#3d2c1e}
   label{display:block;font-size:11px;font-weight:700;color:#a07850;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px}
   input[type=text],input[type=password],input[type=email],input[type=number],input[type=time],input[type=date]{width:100%;padding:10px 13px;border-radius:10px;border:2px solid #e8ddd4;font-size:14px;margin-bottom:10px;outline:none;color:#3d2c1e;font-family:inherit}
@@ -25,7 +25,7 @@
   .sum-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:8px;margin-bottom:20px}
   .sum-card{border-radius:12px;padding:12px 14px}
   .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;z-index:1000;padding:16px}
-  .modal-box{background:#fff;border-radius:16px;padding:24px;width:100%;max-width:400px;max-height:90vh;overflow-y:auto}
+  .modal-box{background:#fff;border-radius:16px;padding:24px;width:100%;max-width:360px;max-height:90vh;overflow-y:auto}
   .tab-bar{display:flex;gap:4px;margin-bottom:16px;background:#f8f4f0;padding:4px;border-radius:12px}
   .tab{flex:1;padding:8px;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;background:transparent;color:#a07850}
   .tab.active{background:#3d2c1e;color:#fff}
@@ -37,14 +37,12 @@
   .spinner{display:inline-block;width:16px;height:16px;border:2px solid #e8ddd4;border-top-color:#3d2c1e;border-radius:50%;animation:spin .7s linear infinite;margin-right:6px;vertical-align:middle}
   @keyframes spin{to{transform:rotate(360deg)}}
   .badge-warn{background:#fef9c3;color:#854d0e;padding:2px 6px;border-radius:20px;font-size:10px;font-weight:700}
-  .section-title{font-size:11px;font-weight:700;color:#a07850;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
 </style>
 </head>
 <body>
-<div id="app" style="width:100%;max-width:1000px">
+<div id="app" style="width:100%;max-width:860px">
   <div class="card"><div style="text-align:center;padding:40px"><span class="spinner"></span></div></div>
 </div>
-
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
@@ -64,7 +62,7 @@ const auth=getAuth(fapp);
 const db=getFirestore(fapp);
 const DAYS=["Ня","Да","Мя","Лх","Пү","Ба","Бя"];
 
-// ── Хуучин болон шинэ бүтэц хоёуланг дэмжих ──
+// ── Хуучин (morningIn/eveningIn) болон шинэ (inTime) бүтэц хоёуланг дэмжинэ ──
 function calcH(i,o){
   if(!i||!o)return 0;
   const[ih,im]=i.split(":").map(Number);
@@ -72,31 +70,23 @@ function calcH(i,o){
   return Math.max(0,(oh*60+om-ih*60-im)/60);
 }
 function totalH(r){
-  if(r.morningIn||r.eveningIn||r.morningOut||r.eveningOut){
+  if(r.morningIn||r.eveningIn||r.morningOut||r.eveningOut)
     return calcH(r.morningIn,r.morningOut)+calcH(r.eveningIn,r.eveningOut);
-  }
   return calcH(r.inTime,r.outTime);
 }
-function displayTimes(r){
-  if(r.morningIn||r.eveningIn||r.morningOut||r.eveningOut){
-    return{mIn:r.morningIn,mOut:r.morningOut,eIn:r.eveningIn,eOut:r.eveningOut};
-  }
-  return{mIn:r.inTime,mOut:r.outTime,eIn:"",eOut:""};
-}
-function isIncomplete(r){
-  if(r.morningIn||r.eveningIn||r.morningOut||r.eveningOut){
-    return !(r.morningOut&&r.eveningOut)||(r.morningIn&&!r.morningOut)||(r.eveningIn&&!r.eveningOut);
-  }
-  return !r.inTime||!r.outTime;
-}
+// Нэг "ирсэн" болон "явсан" цаг гаргаж авна
+function getInTime(r){ return r.morningIn||r.eveningIn||r.inTime||null; }
+function getOutTime(r){ return r.morningOut||r.eveningOut||r.outTime||null; }
+function hasData(r){ return !!(getInTime(r)||getOutTime(r)); }
+function isIncomplete(r){ return !getInTime(r)||!getOutTime(r); }
 function fmtH(h){const hr=Math.floor(h),m=Math.round((h-hr)*60);return m?`${hr}ц ${m}мин`:`${hr}ц`;}
 
 function getPeriods(year,month){
   const last=new Date(year,month,0).getDate();
   const m=String(month).padStart(2,"0");
   return[
-    {label:`${month}/1—${month}/15`,start:`${year}-${m}-01`,end:`${year}-${m}-15`},
-    {label:`${month}/16—${month}/${last}`,start:`${year}-${m}-16`,end:`${year}-${m}-${last}`},
+    {label:`${month}/1—${month}/15`, start:`${year}-${m}-01`, end:`${year}-${m}-15`},
+    {label:`${month}/16—${month}/${last}`, start:`${year}-${m}-16`, end:`${year}-${m}-${String(last).padStart(2,"0")}`},
   ];
 }
 function curYM(){const d=new Date();return{year:d.getFullYear(),month:d.getMonth()+1};}
@@ -110,7 +100,8 @@ async function getPeriodRecs(start,end){
   try{
     const q=query(collection(db,"attendance"),where("fullDate",">=",start),where("fullDate","<=",end),orderBy("fullDate"));
     const s=await getDocs(q);
-    return s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>a.fullDate.localeCompare(b.fullDate)||a.name.localeCompare(b.name));
+    return s.docs.map(d=>({id:d.id,...d.data()}))
+      .sort((a,b)=>a.fullDate.localeCompare(b.fullDate)||a.name.localeCompare(b.name));
   }catch(e){console.error(e);return[];}
 }
 
@@ -136,8 +127,7 @@ onAuthStateChanged(auth,async user=>{
 });
 
 async function loadData(){
-  const periods=getPeriods(ST.year,ST.month);
-  const p=periods[ST.periodIdx];
+  const p=getPeriods(ST.year,ST.month)[ST.periodIdx];
   [ST.cfg,ST.recs]=await Promise.all([getCfg(),getPeriodRecs(p.start,p.end)]);
 }
 
@@ -146,14 +136,13 @@ function render(){
   const{screen,tab,recs,cfg,loading,modal,loginErr,year,month,periodIdx}=ST;
   const HOURLY=cfg.hourlyRate||7000;
   const periods=getPeriods(year,month);
-  const period=periods[periodIdx];
 
+  // Хураангуй
   const byName={};
   recs.forEach(r=>{
     if(!byName[r.name])byName[r.name]={name:r.name,hours:0,days:0};
     byName[r.name].hours+=totalH(r);
-    const dt=displayTimes(r);
-    if(dt.mIn||dt.eIn)byName[r.name].days++;
+    if(hasData(r))byName[r.name].days++;
   });
   const summary=Object.values(byName).sort((a,b)=>a.name.localeCompare(b.name));
   const grandH=summary.reduce((s,e)=>s+e.hours,0);
@@ -164,30 +153,21 @@ function render(){
     if(modal.type==="edit"||modal.type==="add"){
       const r=modal.data||{};
       const isAdd=modal.type==="add";
-      // Засах үед хуучин утгуудыг харуулна
-      const dt=displayTimes(r);
+      const inT=getInTime(r)||"";
+      const outT=getOutTime(r)||"";
       modalHtml=`<div class="modal-overlay" id="mOverlay">
         <div class="modal-box">
           <h2 style="margin-bottom:12px;color:#3d2c1e">${isAdd?"➕ Бүртгэл нэмэх":"✏️ Бүртгэл засах"}</h2>
           <label>Ажилтны нэр</label>
           <input type="text" id="mName" value="${r.name||""}" placeholder="Нэр"/>
-          ${isAdd?`<label>Огноо</label><input type="date" id="mDate" value="${r.fullDate||""}"/>`
+          ${isAdd
+            ?`<label>Огноо</label><input type="date" id="mDate" value="${r.fullDate||""}"/>`
             :`<p style="color:#a07850;font-size:13px;margin-bottom:12px">Огноо: <strong>${r.fullDate||""}</strong></p>`}
-          <div style="background:#f8f4f0;border-radius:10px;padding:10px 12px;margin-bottom:12px">
-            <div class="section-title" style="margin-bottom:8px">🌅 Өглөөний ирц</div>
-            <label>Ирсэн цаг</label>
-            <input type="time" id="mMI" value="${dt.mIn||""}"/>
-            <label>Явсан цаг</label>
-            <input type="time" id="mMO" value="${dt.mOut||""}"/>
-          </div>
-          <div style="background:#f0f4ff;border-radius:10px;padding:10px 12px;margin-bottom:12px">
-            <div class="section-title" style="margin-bottom:8px">🌆 Оройн ирц</div>
-            <label>Ирсэн цаг</label>
-            <input type="time" id="mEI" value="${dt.eIn||""}"/>
-            <label>Явсан цаг</label>
-            <input type="time" id="mEO" value="${dt.eOut||""}"/>
-          </div>
-          <div class="flex">
+          <label>✅ Ирсэн цаг</label>
+          <input type="time" id="mIn" value="${inT}"/>
+          <label>👋 Явсан цаг</label>
+          <input type="time" id="mOut" value="${outT}"/>
+          <div class="flex" style="margin-top:4px">
             <button class="btn btn-dark" style="flex:1" id="mSave">${isAdd?"Нэмэх":"Хадгалах"}</button>
             <button class="btn btn-light" style="flex:1" id="mCancel">Болих</button>
           </div>
@@ -236,26 +216,24 @@ function render(){
     return;
   }
 
-  // Сар сонгогч
-  const mOpts=Array.from({length:12},(_,i)=>{
-    const m=i+1;
-    return`<option value="${m}" ${m===month?"selected":""}>${m}-р сар</option>`;
-  }).join("");
+  // Сар/жил сонгогч
+  const mOpts=Array.from({length:12},(_,i)=>{const m=i+1;return`<option value="${m}" ${m===month?"selected":""}>${m}-р сар</option>`;}).join("");
   const yOpts=[year-1,year,year+1].map(y=>`<option value="${y}" ${y===ST.year?"selected":""}>${y}</option>`).join("");
 
-  // Хүснэгтийн мөрүүд
+  // Хүснэгтийн мөрүүд — зөвхөн Ирсэн/Явсан нэг мөрт
   const tableRows=recs.length===0
-    ?`<tr><td colspan="9" style="text-align:center;color:#aaa;padding:24px">${loading?"Ачааллаж байна...":"Бүртгэл байхгүй"}</td></tr>`
+    ?`<tr><td colspan="7" style="text-align:center;color:#aaa;padding:24px">${loading?"Ачааллаж байна...":"Бүртгэл байхгүй"}</td></tr>`
     :recs.map((r,i)=>{
       const h=totalH(r);
-      const dt=displayTimes(r);
+      const inT=getInTime(r);
+      const outT=getOutTime(r);
       const warn=isIncomplete(r);
       return`<tr style="background:${i%2===0?"#fff":"#faf8f6"}">
         <td>${r.fullDate}</td>
         <td>${r.day||""}</td>
         <td style="font-weight:700">${r.name} ${warn?`<span class="badge-warn">дутуу</span>`:""}</td>
-        <td>${dt.mIn||"—"}</td><td>${dt.mOut||"—"}</td>
-        <td>${dt.eIn||"—"}</td><td>${dt.eOut||"—"}</td>
+        <td style="color:#22c55e;font-weight:600">${inT||"—"}</td>
+        <td style="color:#ef4444;font-weight:600">${outT||"—"}</td>
         <td>${h>0?fmtH(h):"—"}</td>
         <td style="font-weight:600;color:#15803d">${h>0?Math.round(h*HOURLY).toLocaleString()+"₮":"—"}</td>
         <td><div class="flex">
@@ -299,8 +277,7 @@ function render(){
       <div class="overflow-x"><table>
         <thead><tr>
           <th>Огноо</th><th>Гараг</th><th>Нэр</th>
-          <th>🌅 Өглөө ирсэн</th><th>🌤 Өглөө явсан</th>
-          <th>🌆 Орой ирсэн</th><th>🌙 Орой явсан</th>
+          <th>✅ Ирсэн</th><th>👋 Явсан</th>
           <th>Нийт цаг</th><th>Цалин</th><th></th>
         </tr></thead>
         <tbody>${tableRows}</tbody>
@@ -384,12 +361,9 @@ async function doLogin(){
 async function doSaveRec(){
   const isAdd=ST.modal.type==="add";
   const name=document.getElementById("mName")?.value.trim();
-  const mi=document.getElementById("mMI")?.value||null;
-  const mo=document.getElementById("mMO")?.value||null;
-  const ei=document.getElementById("mEI")?.value||null;
-  const eo=document.getElementById("mEO")?.value||null;
+  const inT=document.getElementById("mIn")?.value||null;
+  const outT=document.getElementById("mOut")?.value||null;
   if(!name){showToast("Нэр оруулна уу","#ef4444");return;}
-
   let fullDate=ST.modal.data.fullDate;
   if(isAdd){fullDate=document.getElementById("mDate")?.value;if(!fullDate){showToast("Огноо оруулна уу","#ef4444");return;}}
 
@@ -399,15 +373,13 @@ async function doSaveRec(){
   const oldId=`${fullDate}__${ST.modal.data.name||name}`;
   const newId=`${fullDate}__${name}`;
 
-  // Хуучин талбарын нэрийг хэвээр хадгална
+  // morningIn/morningOut талбарт хадгална — хуучин өгөгдөлтэй нийцнэ
   const data={name,fullDate,date,day};
-  if(mi) data.morningIn=mi;
-  if(mo) data.morningOut=mo;
-  if(ei) data.eveningIn=ei;
-  if(eo) data.eveningOut=eo;
+  if(inT) data.morningIn=inT;
+  if(outT) data.morningOut=outT;
 
   try{
-    if(!isAdd&&oldId!==newId)await deleteDoc(doc(db,"attendance",oldId));
+    if(!isAdd&&oldId!==newId) await deleteDoc(doc(db,"attendance",oldId));
     await setDoc(doc(db,"attendance",newId),data);
     ST.modal=null;ST.loading=true;render();
     await loadData();ST.loading=false;
@@ -437,11 +409,10 @@ async function doSaveCfg(){
 function exportCSV(){
   const HOURLY=ST.cfg.hourlyRate||7000;
   const periods=getPeriods(ST.year,ST.month);
-  const period=periods[ST.periodIdx];
-  const hdr="Огноо,Гараг,Нэр,Өглөө ирсэн,Өглөө явсан,Орой ирсэн,Орой явсан,Нийт цаг,Цалин (₮)";
+  const hdr="Огноо,Гараг,Нэр,Ирсэн,Явсан,Нийт цаг,Цалин (₮)";
   const lines=ST.recs.map(r=>{
-    const h=totalH(r);const dt=displayTimes(r);
-    return`${r.fullDate},${r.day||""},${r.name},${dt.mIn||""},${dt.mOut||""},${dt.eIn||""},${dt.eOut||""},${h.toFixed(2)},${Math.round(h*HOURLY)}`;
+    const h=totalH(r);
+    return`${r.fullDate},${r.day||""},${r.name},${getInTime(r)||""},${getOutTime(r)||""},${h.toFixed(2)},${Math.round(h*HOURLY)}`;
   });
   const csv=[hdr,...lines].join("\n");
   const blob=new Blob(["\uFEFF"+csv],{type:"text/csv;charset=utf-8;"});
