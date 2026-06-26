@@ -4,73 +4,68 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>Ажилтан — Ирц бүртгэл</title>
-
-<!-- PWA -->
 <meta name="mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
 <meta name="apple-mobile-web-app-title" content="Ирц бүртгэл"/>
 <meta name="theme-color" content="#3d2c1e"/>
 <link rel="manifest" href="manifest.json"/>
-
 <style>
-  *{box-sizing:border-box;margin:0;padding:0}
-  body{min-height:100vh;background:linear-gradient(135deg,#f8f0e8,#efe6da);font-family:'Segoe UI',system-ui,sans-serif;display:flex;align-items:center;justify-content:center;padding:16px}
-  .card{background:#fff;border-radius:20px;padding:24px 22px;width:100%;max-width:440px;box-shadow:0 8px 32px rgba(61,44,30,.10)}
-  h1{font-size:22px;font-weight:800;color:#3d2c1e;margin-bottom:4px}
-  .sub{color:#a07850;font-size:13px;margin-bottom:20px}
-  label{display:block;font-size:11px;font-weight:700;color:#a07850;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px}
-  input[type=text]{width:100%;padding:11px 13px;border-radius:10px;border:2px solid #e8ddd4;font-size:16px;margin-bottom:12px;outline:none;color:#3d2c1e;font-family:inherit}
-  .btn-primary{width:100%;padding:13px;background:#3d2c1e;color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit}
-  .btn-ghost{padding:10px 16px;background:#f0e8e0;color:#3d2c1e;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
-  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
-  .chk-btn{padding:20px 8px;border-radius:14px;border:none;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;line-height:1.4}
-  .status-box{background:#f8f4f0;border-radius:12px;padding:10px 14px;margin-bottom:14px;font-size:13px;color:#7a5c42;line-height:1.8}
-  .salary-box{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:12px 14px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center}
-  .salary-amt{font-size:22px;font-weight:800;color:#15803d}
-  hr{border:none;border-top:1px solid #f0e8e0;margin:14px 0}
-  table{width:100%;border-collapse:collapse;font-size:12px}
-  th{padding:6px 8px;text-align:left;color:#a07850;font-weight:700;white-space:nowrap;border-bottom:2px solid #e8ddd4;background:#f8f4f0}
-  td{padding:6px 8px;border-bottom:1px solid #f0e8e0;white-space:nowrap;color:#3d2c1e}
-  .scroll-table{max-height:220px;overflow-y:auto;border-radius:10px;border:1px solid #f0e8e0}
-  .success-card{text-align:center;padding:44px 24px}
-  .period-tabs{display:flex;gap:4px;margin-bottom:12px;background:#f8f4f0;padding:3px;border-radius:10px}
-  .period-tab{flex:1;padding:8px;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;background:transparent;color:#a07850}
-  .period-tab.active{background:#3d2c1e;color:#fff}
-  .spinner{display:inline-block;width:20px;height:20px;border:2px solid #e8ddd4;border-top-color:#3d2c1e;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle}
-  @keyframes spin{to{transform:rotate(360deg)}}
-  .install-bar{background:#3d2c1e;color:#fff;padding:10px 16px;border-radius:12px;display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;font-size:13px}
-  .install-btn{background:#fff;color:#3d2c1e;border:none;border-radius:8px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer}
+ *{box-sizing:border-box;margin:0;padding:0}
+ body{min-height:100vh;background:linear-gradient(135deg,#f8f0e8,#efe6da);font-family:'Segoe UI',system-ui,sans-serif;display:flex;align-items:center;justify-content:center;padding:16px}
+ .card{background:#fff;border-radius:20px;padding:24px 22px;width:100%;max-width:440px;box-shadow:0 8px 32px rgba(61,44,30,.10)}
+ h1{font-size:22px;font-weight:800;color:#3d2c1e;margin-bottom:4px}
+ .sub{color:#a07850;font-size:13px;margin-bottom:20px}
+ label{display:block;font-size:11px;font-weight:700;color:#a07850;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px}
+ input[type=text]{width:100%;padding:11px 13px;border-radius:10px;border:2px solid #e8ddd4;font-size:16px;margin-bottom:12px;outline:none;color:#3d2c1e;font-family:inherit}
+ .btn-primary{width:100%;padding:13px;background:#3d2c1e;color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit}
+ .btn-ghost{padding:10px 16px;background:#f0e8e0;color:#3d2c1e;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
+ .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+ .chk-btn{padding:20px 8px;border-radius:14px;border:none;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;line-height:1.4}
+ .status-box{background:#f8f4f0;border-radius:12px;padding:10px 14px;margin-bottom:14px;font-size:13px;color:#7a5c42;line-height:1.8}
+ .salary-box{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:12px 14px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center}
+ .salary-amt{font-size:22px;font-weight:800;color:#15803d}
+ hr{border:none;border-top:1px solid #f0e8e0;margin:14px 0}
+ table{width:100%;border-collapse:collapse;font-size:12px}
+ th{padding:6px 8px;text-align:left;color:#a07850;font-weight:700;white-space:nowrap;border-bottom:2px solid #e8ddd4;background:#f8f4f0}
+ td{padding:6px 8px;border-bottom:1px solid #f0e8e0;white-space:nowrap;color:#3d2c1e}
+ .scroll-table{max-height:220px;overflow-y:auto;border-radius:10px;border:1px solid #f0e8e0}
+ .success-card{text-align:center;padding:44px 24px}
+ .period-tabs{display:flex;gap:4px;margin-bottom:12px;background:#f8f4f0;padding:3px;border-radius:10px}
+ .period-tab{flex:1;padding:8px;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;background:transparent;color:#a07850}
+ .period-tab.active{background:#3d2c1e;color:#fff}
+ .spinner{display:inline-block;width:20px;height:20px;border:2px solid #e8ddd4;border-top-color:#3d2c1e;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle}
+ @keyframes spin{to{transform:rotate(360deg)}}
+ .install-bar{background:#3d2c1e;color:#fff;padding:10px 16px;border-radius:12px;display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;font-size:13px}
+ .install-btn{background:#fff;color:#3d2c1e;border:none;border-radius:8px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer}
 </style>
 </head>
 <body>
 <div class="card" id="app"><div style="text-align:center;padding:40px"><span class="spinner"></span></div></div>
-
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFirestore, doc, getDoc, setDoc, collection, query, where, getDocs, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey:            "AIzaSyCizUzQHQDpDyv8DljEMQNCHfKAFmSkvqg",
-  authDomain:        "irtsiin-system.firebaseapp.com",
-  projectId:         "irtsiin-system",
-  storageBucket:     "irtsiin-system.firebasestorage.app",
-  messagingSenderId: "990981947127",
-  appId:             "1:990981947127:web:86d4ecd4e7ec2c1aa7ddf2"
+ apiKey:            "AIzaSyCizUzQHQDpDyv8DljEMQNCHfKAFmSkvqg",
+ authDomain:        "irtsiin-system.firebaseapp.com",
+ projectId:         "irtsiin-system",
+ storageBucket:     "irtsiin-system.firebasestorage.app",
+ messagingSenderId: "990981947127",
+ appId:             "1:990981947127:web:86d4ecd4e7ec2c1aa7ddf2"
 };
 
-// Telegram
-const TG_TOKEN   = "8684701151:AAEGEfkbiypPxEAAIZ_WEwiVkcoqRUVG5mY";
+const TG_TOKEN   = "8684701151:AAEGEfkbiypPxEAAIz_WEwiVkcoqRUVG5mY";
 const TG_CHAT_ID = "8903339382";
 
 async function sendTelegram(text){
-  try{
-    await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`,{
-      method:"POST",
-      headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({chat_id:TG_CHAT_ID, text, parse_mode:"HTML"})
-    });
-  }catch(e){console.log("Telegram error:",e);}
+ try{
+   await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`,{
+     method:"POST",
+     headers:{"Content-Type":"application/json"},
+     body:JSON.stringify({chat_id:TG_CHAT_ID,text,parse_mode:"HTML"})
+   });
+ }catch(e){console.log("Telegram error:",e);}
 }
 
 const fapp=initializeApp(firebaseConfig);
@@ -78,250 +73,211 @@ const db=getFirestore(fapp);
 const DAYS=["Ня","Да","Мя","Лх","Пү","Ба","Бя"];
 
 function getToday(){
-  const d=new Date();
-  const fd=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
-  return{date:`${d.getMonth()+1}/${d.getDate()}`,day:DAYS[d.getDay()],fullDate:fd};
+ const d=new Date();
+ const fd=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+ return{date:`${d.getMonth()+1}/${d.getDate()}`,day:DAYS[d.getDay()],fullDate:fd};
 }
 function getNow(){
-  const d=new Date();
-  return`${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`;
+ const d=new Date();
+ return`${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`;
 }
 function calcH(i,o){
-  if(!i||!o)return 0;
-  const[ih,im]=i.split(":").map(Number);
-  const[oh,om]=o.split(":").map(Number);
-  return Math.max(0,(oh*60+om-ih*60-im)/60);
+ if(!i||!o)return 0;
+ const[ih,im]=i.split(":").map(Number);
+ const[oh,om]=o.split(":").map(Number);
+ return Math.max(0,(oh*60+om-ih*60-im)/60);
 }
 function totalH(r){
-  if(r.morningIn||r.eveningIn||r.morningOut||r.eveningOut)
-    return calcH(r.morningIn,r.morningOut)+calcH(r.eveningIn,r.eveningOut);
-  return calcH(r.inTime,r.outTime);
+ if(r.morningIn||r.eveningIn||r.morningOut||r.eveningOut)
+   return calcH(r.morningIn,r.morningOut)+calcH(r.eveningIn,r.eveningOut);
+ return calcH(r.inTime,r.outTime);
 }
 function getInTime(r){return r.morningIn||r.eveningIn||r.inTime||null;}
 function getOutTime(r){return r.morningOut||r.eveningOut||r.outTime||null;}
 function fmtH(h){const hr=Math.floor(h),m=Math.round((h-hr)*60);return m?`${hr}ц ${m}мин`:`${hr}ц`;}
 
 function getPeriods(fullDate){
-  const[y,m]=fullDate.split("-").map(Number);
-  const last=new Date(y,m,0).getDate();
-  const mm=String(m).padStart(2,"0");
-  return[
-    {label:`${m}/1—${m}/15`,start:`${y}-${mm}-01`,end:`${y}-${mm}-15`},
-    {label:`${m}/16—${m}/${last}`,start:`${y}-${mm}-16`,end:`${y}-${mm}-${String(last).padStart(2,"0")}`},
-  ];
+ const[y,m]=fullDate.split("-").map(Number);
+ const last=new Date(y,m,0).getDate();
+ const mm=String(m).padStart(2,"0");
+ return[
+   {label:`${m}/1—${m}/15`,start:`${y}-${mm}-01`,end:`${y}-${mm}-15`},
+   {label:`${m}/16—${m}/${last}`,start:`${y}-${mm}-16`,end:`${y}-${mm}-${String(last).padStart(2,"0")}`},
+ ];
 }
 function getCurPeriodIdx(){return new Date().getDate()<=15?0:1;}
 
 async function getCfg(){
-  try{const s=await getDoc(doc(db,"config","main"));return s.exists()?s.data():{title:"Цэс",hourlyRate:7000};}
-  catch{return{title:"Цэс",hourlyRate:7000};}
+ try{const s=await getDoc(doc(db,"config","main"));return s.exists()?s.data():{title:"Цэс",hourlyRate:7000};}
+ catch{return{title:"Цэс",hourlyRate:7000};}
 }
 async function getTodayRec(name){
-  const t=getToday();
-  try{const s=await getDoc(doc(db,"attendance",`${t.fullDate}__${name}`));return s.exists()?s.data():{};}
-  catch{return{};}
+ const t=getToday();
+ try{const s=await getDoc(doc(db,"attendance",`${t.fullDate}__${name}`));return s.exists()?s.data():{};}
+ catch{return{};}
 }
 async function getPeriodRecs(name,start,end){
-  try{
-    const q=query(collection(db,"attendance"),where("fullDate",">=",start),where("fullDate","<=",end),where("name","==",name),orderBy("fullDate"));
-    const s=await getDocs(q);
-    return s.docs.map(d=>({id:d.id,...d.data()}));
-  }catch(e){console.error(e);return[];}
+ try{
+   const q=query(collection(db,"attendance"),where("fullDate",">=",start),where("fullDate","<=",end),where("name","==",name),orderBy("fullDate"));
+   const s=await getDocs(q);
+   return s.docs.map(d=>({id:d.id,...d.data()}));
+ }catch(e){console.error(e);return[];}
 }
 
 async function doCheckIn(name,type){
-  const t=getToday();
-  const id=`${t.fullDate}__${name}`;
-  const now=getNow();
-  const ref=doc(db,"attendance",id);
-  const snap=await getDoc(ref);
-  const existing=snap.exists()?snap.data():{date:t.date,day:t.day,name,fullDate:t.fullDate};
-  const update={...existing};
-  if(type==="in"){
-    if(!update.morningIn) update.morningIn=now;
-    else if(!update.eveningIn) update.eveningIn=now;
-  } else {
-    if(update.morningIn&&!update.morningOut) update.morningOut=now;
-    else if(update.eveningIn&&!update.eveningOut) update.eveningOut=now;
-  }
-  await setDoc(ref,update);
-
-  // Telegram мэдэгдэл
-  const emoji = type==="in" ? "✅" : "👋";
-  const action = type==="in" ? "Ирлээ" : "Явлаа";
-  const msg = `${emoji} <b>${name}</b> ${action}\n🕐 ${now} · 📅 ${t.date} ${t.day}`;
-  await sendTelegram(msg);
-
-  return now;
+ const t=getToday();
+ const id=`${t.fullDate}__${name}`;
+ const now=getNow();
+ const ref=doc(db,"attendance",id);
+ const snap=await getDoc(ref);
+ const existing=snap.exists()?snap.data():{date:t.date,day:t.day,name,fullDate:t.fullDate};
+ const update={...existing};
+ if(type==="in"){
+   if(!update.morningIn) update.morningIn=now;
+   else if(!update.eveningIn) update.eveningIn=now;
+ } else {
+   if(update.morningIn&&!update.morningOut) update.morningOut=now;
+   else if(update.eveningIn&&!update.eveningOut) update.eveningOut=now;
+ }
+ await setDoc(ref,update);
+ const emoji=type==="in"?"✅":"👋";
+ const action=type==="in"?"Ирлээ":"Явлаа";
+ await sendTelegram(`${emoji} <b>${name}</b> ${action}\n🕐 ${now} · 📅 ${t.date} ${t.day}`);
+ return now;
 }
 
-// PWA install
-let deferredPrompt = null;
-window.addEventListener('beforeinstallprompt', e=>{
-  e.preventDefault();
-  deferredPrompt = e;
-  render();
-});
+let deferredPrompt=null;
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;render();});
 
-let ST={
-  screen:"name",name:"",cfg:{title:"Цэс",hourlyRate:7000},
-  todayRec:{},periodRecs:[],periodIdx:0,
-  loading:false,checkedIn:null,
-};
+let ST={screen:"name",name:"",cfg:{title:"Цэс",hourlyRate:7000},todayRec:{},periodRecs:[],periodIdx:0,loading:false,checkedIn:null};
 
 function showToast(txt,bg="#22c55e"){
-  const t=document.createElement("div");
-  t.style.cssText=`position:fixed;top:20px;left:50%;transform:translateX(-50%);background:${bg};color:#fff;padding:10px 24px;border-radius:30px;font-weight:700;font-size:14px;z-index:9999;font-family:'Segoe UI',sans-serif`;
-  t.textContent=txt;document.body.appendChild(t);setTimeout(()=>t.remove(),3000);
+ const t=document.createElement("div");
+ t.style.cssText=`position:fixed;top:20px;left:50%;transform:translateX(-50%);background:${bg};color:#fff;padding:10px 24px;border-radius:30px;font-weight:700;font-size:14px;z-index:9999;font-family:'Segoe UI',sans-serif`;
+ t.textContent=txt;document.body.appendChild(t);setTimeout(()=>t.remove(),3000);
 }
 
 async function init(){ST.cfg=await getCfg();render();}
 
 async function render(){
-  const app=document.getElementById("app");
-  const{cfg,screen,name,todayRec,periodRecs,periodIdx,loading,checkedIn}=ST;
-  const HOURLY=cfg.hourlyRate||7000;
-  const today=getToday();
-  const periods=getPeriods(today.fullDate);
+ const app=document.getElementById("app");
+ const{cfg,screen,name,todayRec,periodRecs,periodIdx,loading,checkedIn}=ST;
+ const HOURLY=cfg.hourlyRate||7000;
+ const today=getToday();
+ const periods=getPeriods(today.fullDate);
 
-  if(checkedIn){
-    app.innerHTML=`<div class="success-card">
-      <div style="font-size:56px">${checkedIn.type==="in"?"✅":"👋"}</div>
-      <div style="font-size:22px;font-weight:800;color:#3d2c1e;margin:10px 0 6px">${checkedIn.name}</div>
-      <div style="font-size:18px;font-weight:700;color:#a07850">${checkedIn.type==="in"?"Ирлээ":"Явлаа"}</div>
-      <div style="font-size:15px;color:#c8a882;margin-top:4px">${checkedIn.time}</div>
-      <div style="font-size:12px;color:#22c55e;margin-top:8px">📨 Админд мэдэгдэл илгээгдлээ</div>
-    </div>`;
-    return;
-  }
+ if(checkedIn){
+   app.innerHTML=`<div class="success-card">
+     <div style="font-size:56px">${checkedIn.type==="in"?"✅":"👋"}</div>
+     <div style="font-size:22px;font-weight:800;color:#3d2c1e;margin:10px 0 6px">${checkedIn.name}</div>
+     <div style="font-size:18px;font-weight:700;color:#a07850">${checkedIn.type==="in"?"Ирлээ":"Явлаа"}</div>
+     <div style="font-size:15px;color:#c8a882;margin-top:4px">${checkedIn.time}</div>
+     <div style="font-size:12px;color:#22c55e;margin-top:8px">📨 Админд мэдэгдэл илгээгдлээ</div>
+   </div>`;
+   return;
+ }
 
-  if(screen==="name"){
-    const installBar = deferredPrompt
-      ? `<div class="install-bar">
-          <span>📱 Апп болгож суулгах</span>
-          <button class="install-btn" id="installBtn">Суулгах</button>
-         </div>`
-      : "";
-    app.innerHTML=`
-      ${installBar}
-      <h1>☕ ${cfg.title}</h1>
-      <p class="sub">${today.date} · ${today.day}</p>
-      <label>Нэрээ бичнэ үү</label>
-      <input type="text" id="nameIn" placeholder="Жишээ: Болд"/>
-      <button class="btn-primary" id="nextBtn">Үргэлжлүүлэх →</button>`;
-    const inp=document.getElementById("nameIn");
-    inp.focus();
-    inp.onkeydown=e=>{if(e.key==="Enter")confirmName();};
-    document.getElementById("nextBtn").onclick=confirmName;
-    document.getElementById("installBtn")?.addEventListener("click",async()=>{
-      if(!deferredPrompt)return;
-      deferredPrompt.prompt();
-      const{outcome}=await deferredPrompt.userChoice;
-      if(outcome==="accepted"){deferredPrompt=null;showToast("Апп суулгагдлаа ✓");}
-      render();
-    });
-    return;
-  }
+ if(screen==="name"){
+   const installBar=deferredPrompt?`<div class="install-bar"><span>📱 Апп болгож суулгах</span><button class="install-btn" id="installBtn">Суулгах</button></div>`:"";
+   app.innerHTML=`
+     ${installBar}
+     <h1>☕ ${cfg.title}</h1>
+     <p class="sub">${today.date} · ${today.day}</p>
+     <label>Нэрээ бичнэ үү</label>
+     <input type="text" id="nameIn" placeholder="Жишээ: Болд"/>
+     <button class="btn-primary" id="nextBtn">Үргэлжлүүлэх →</button>`;
+   const inp=document.getElementById("nameIn");
+   inp.focus();
+   inp.onkeydown=e=>{if(e.key==="Enter")confirmName();};
+   document.getElementById("nextBtn").onclick=confirmName;
+   document.getElementById("installBtn")?.addEventListener("click",async()=>{
+     if(!deferredPrompt)return;
+     deferredPrompt.prompt();
+     const{outcome}=await deferredPrompt.userChoice;
+     if(outcome==="accepted"){deferredPrompt=null;showToast("Апп суулгагдлаа ✓");}
+     render();
+   });
+   return;
+ }
 
-  // checkin screen
-  const r=todayRec;
-  const inTime=getInTime(r);
-  const outTime=getOutTime(r);
-  const canIn=!r.morningIn||(r.morningIn&&r.morningOut&&!r.eveningIn);
-  const canOut=(r.morningIn&&!r.morningOut)||(r.eveningIn&&!r.eveningOut);
+ const r=todayRec;
+ const inTime=getInTime(r);
+ const outTime=getOutTime(r);
+ const canIn=!r.morningIn||(r.morningIn&&r.morningOut&&!r.eveningIn);
+ const canOut=(r.morningIn&&!r.morningOut)||(r.eveningIn&&!r.eveningOut);
+ const totalHrs=periodRecs.reduce((s,rec)=>s+totalH(rec),0);
+ const salary=Math.round(totalHrs*HOURLY);
+ const days=periodRecs.filter(rec=>getInTime(rec)).length;
 
-  const totalHrs=periodRecs.reduce((s,rec)=>s+totalH(rec),0);
-  const salary=Math.round(totalHrs*HOURLY);
-  const days=periodRecs.filter(rec=>getInTime(rec)).length;
+ const tableRows=periodRecs.length===0
+   ?`<tr><td colspan="3" style="text-align:center;color:#aaa;padding:12px">Бүртгэл байхгүй</td></tr>`
+   :periodRecs.map((rec,i)=>{
+     const h=totalH(rec);
+     return`<tr style="background:${i%2===0?"#fff":"#faf8f6"}">
+       <td>${rec.date||""} ${rec.day||""}</td>
+       <td>${getInTime(rec)||"—"} → ${getOutTime(rec)||"—"}</td>
+       <td style="font-weight:600;color:#15803d">${h>0?fmtH(h):"—"}</td>
+     </tr>`;
+   }).join("");
 
-  const tableRows=periodRecs.length===0
-    ?`<tr><td colspan="3" style="text-align:center;color:#aaa;padding:12px">Бүртгэл байхгүй</td></tr>`
-    :periodRecs.map((rec,i)=>{
-      const h=totalH(rec);
-      const ri=getInTime(rec);
-      const ro=getOutTime(rec);
-      return`<tr style="background:${i%2===0?"#fff":"#faf8f6"}">
-        <td>${rec.date||""} ${rec.day||""}</td>
-        <td>${ri||"—"} → ${ro||"—"}</td>
-        <td style="font-weight:600;color:#15803d">${h>0?fmtH(h):"—"}</td>
-      </tr>`;
-    }).join("");
+ app.innerHTML=`
+   <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px">
+     <div><h1 style="font-size:20px">👤 ${name}</h1><p class="sub" style="margin-bottom:0">${today.date} · ${today.day}</p></div>
+     <button class="btn-ghost" id="backBtn">← Буцах</button>
+   </div>
+   <div class="status-box"><strong>Өнөөдөр:</strong> Ирсэн: <strong>${inTime||"—"}</strong> &nbsp;·&nbsp; Явсан: <strong>${outTime||"—"}</strong></div>
+   <div class="grid2">
+     <button class="chk-btn" id="btnIn"
+       style="background:${!canIn?"#f0ece8":"#22c55e"};color:${!canIn?"#b0a090":"#fff"};cursor:${!canIn?"not-allowed":"pointer"}"
+       ${!canIn?"disabled":""}>✅ Ирлээ${inTime?" ✓":""}</button>
+     <button class="chk-btn" id="btnOut"
+       style="background:${!canOut?"#f0ece8":"#ef4444"};color:${!canOut?"#b0a090":"#fff"};cursor:${!canOut?"not-allowed":"pointer"}"
+       ${!canOut?"disabled":""}>👋 Явлаа${outTime?" ✓":""}</button>
+   </div>
+   ${loading?`<div style="text-align:center;padding:8px"><span class="spinner"></span></div>`:""}
+   <hr/>
+   <div style="font-size:11px;font-weight:700;color:#a07850;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Миний бүртгэл — цалин</div>
+   <div class="period-tabs">
+     <button class="period-tab ${periodIdx===0?"active":""}" id="tab0">${periods[0].label}</button>
+     <button class="period-tab ${periodIdx===1?"active":""}" id="tab1">${periods[1].label}</button>
+   </div>
+   <div class="salary-box">
+     <div style="font-size:13px;color:#166534">${days} өдөр · ${fmtH(totalHrs)}<br><span style="font-size:11px;color:#86efac">${HOURLY.toLocaleString()}₮/цаг</span></div>
+     <div class="salary-amt">${salary.toLocaleString()}₮</div>
+   </div>
+   <div class="scroll-table"><table>
+     <thead><tr><th>Огноо</th><th>Ирсэн → Явсан</th><th>Цаг</th></tr></thead>
+     <tbody>${tableRows}</tbody>
+   </table></div>`;
 
-  app.innerHTML=`
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px">
-      <div><h1 style="font-size:20px">👤 ${name}</h1><p class="sub" style="margin-bottom:0">${today.date} · ${today.day}</p></div>
-      <button class="btn-ghost" id="backBtn">← Буцах</button>
-    </div>
-    <div class="status-box">
-      <strong>Өнөөдөр:</strong>
-      Ирсэн: <strong>${inTime||"—"}</strong> &nbsp;·&nbsp; Явсан: <strong>${outTime||"—"}</strong>
-    </div>
-    <div class="grid2">
-      <button class="chk-btn" id="btnIn"
-        style="background:${!canIn?"#f0ece8":"#22c55e"};color:${!canIn?"#b0a090":"#fff"};cursor:${!canIn?"not-allowed":"pointer"}"
-        ${!canIn?"disabled":""}>✅ Ирлээ${inTime?" ✓":""}</button>
-      <button class="chk-btn" id="btnOut"
-        style="background:${!canOut?"#f0ece8":"#ef4444"};color:${!canOut?"#b0a090":"#fff"};cursor:${!canOut?"not-allowed":"pointer"}"
-        ${!canOut?"disabled":""}>👋 Явлаа${outTime?" ✓":""}</button>
-    </div>
-    ${loading?`<div style="text-align:center;padding:8px"><span class="spinner"></span></div>`:""}
-    <hr/>
-    <div style="font-size:11px;font-weight:700;color:#a07850;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Миний бүртгэл — цалин</div>
-    <div class="period-tabs">
-      <button class="period-tab ${periodIdx===0?"active":""}" id="tab0">${periods[0].label}</button>
-      <button class="period-tab ${periodIdx===1?"active":""}" id="tab1">${periods[1].label}</button>
-    </div>
-    <div class="salary-box">
-      <div style="font-size:13px;color:#166534">
-        ${days} өдөр · ${fmtH(totalHrs)}<br>
-        <span style="font-size:11px;color:#86efac">${HOURLY.toLocaleString()}₮/цаг</span>
-      </div>
-      <div class="salary-amt">${salary.toLocaleString()}₮</div>
-    </div>
-    <div class="scroll-table">
-      <table>
-        <thead><tr><th>Огноо</th><th>Ирсэн → Явсан</th><th>Цаг</th></tr></thead>
-        <tbody>${tableRows}</tbody>
-      </table>
-    </div>`;
+ document.getElementById("backBtn").onclick=()=>{ST.screen="name";ST.name="";render();};
+ document.getElementById("tab0").onclick=async()=>{ST.periodIdx=0;ST.loading=true;render();ST.periodRecs=await getPeriodRecs(ST.name,periods[0].start,periods[0].end);ST.loading=false;render();};
+ document.getElementById("tab1").onclick=async()=>{ST.periodIdx=1;ST.loading=true;render();ST.periodRecs=await getPeriodRecs(ST.name,periods[1].start,periods[1].end);ST.loading=false;render();};
 
-  document.getElementById("backBtn").onclick=()=>{ST.screen="name";ST.name="";render();};
-
-  async function switchPeriod(idx){
-    ST.periodIdx=idx;ST.loading=true;render();
-    ST.periodRecs=await getPeriodRecs(ST.name,periods[idx].start,periods[idx].end);
-    ST.loading=false;render();
-  }
-  document.getElementById("tab0").onclick=()=>switchPeriod(0);
-  document.getElementById("tab1").onclick=()=>switchPeriod(1);
-
-  async function handleBtn(type){
-    if(loading)return;
-    ST.loading=true;render();
-    try{
-      const time=await doCheckIn(ST.name,type);
-      ST.checkedIn={name:ST.name,type,time};
-      ST.screen="name";ST.name="";
-      render();
-      setTimeout(()=>{ST.checkedIn=null;render();},4000);
-    }catch(e){ST.loading=false;showToast("Алдаа: "+e.message,"#ef4444");render();}
-  }
-
-  if(canIn) document.getElementById("btnIn").onclick=()=>handleBtn("in");
-  if(canOut) document.getElementById("btnOut").onclick=()=>handleBtn("out");
+ async function handleBtn(type){
+   if(loading)return;
+   ST.loading=true;render();
+   try{
+     const time=await doCheckIn(ST.name,type);
+     ST.checkedIn={name:ST.name,type,time};
+     ST.screen="name";ST.name="";render();
+     setTimeout(()=>{ST.checkedIn=null;render();},4000);
+   }catch(e){ST.loading=false;showToast("Алдаа: "+e.message,"#ef4444");render();}
+ }
+ if(canIn) document.getElementById("btnIn").onclick=()=>handleBtn("in");
+ if(canOut) document.getElementById("btnOut").onclick=()=>handleBtn("out");
 }
 
 async function confirmName(){
-  const val=document.getElementById("nameIn")?.value.trim();
-  if(!val)return;
-  ST.name=val;ST.screen="checkin";ST.loading=true;render();
-  const today=getToday();
-  const periods=getPeriods(today.fullDate);
-  ST.periodIdx=getCurPeriodIdx();
-  const p=periods[ST.periodIdx];
-  const[tr,pr]=await Promise.all([getTodayRec(val),getPeriodRecs(val,p.start,p.end)]);
-  ST.todayRec=tr;ST.periodRecs=pr;ST.loading=false;
-  render();
+ const val=document.getElementById("nameIn")?.value.trim();
+ if(!val)return;
+ ST.name=val;ST.screen="checkin";ST.loading=true;render();
+ const today=getToday();
+ const periods=getPeriods(today.fullDate);
+ ST.periodIdx=getCurPeriodIdx();
+ const p=periods[ST.periodIdx];
+ const[tr,pr]=await Promise.all([getTodayRec(val),getPeriodRecs(val,p.start,p.end)]);
+ ST.todayRec=tr;ST.periodRecs=pr;ST.loading=false;render();
 }
 
 init();
