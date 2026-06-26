@@ -15,7 +15,7 @@
   .btn-primary{width:100%;padding:13px;background:#3d2c1e;color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit}
   .btn-ghost{padding:10px 16px;background:#f0e8e0;color:#3d2c1e;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
   .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
-  .chk-btn{padding:18px 8px;border-radius:14px;border:none;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit}
+  .chk-btn{padding:20px 8px;border-radius:14px;border:none;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;line-height:1.4}
   .status-box{background:#f8f4f0;border-radius:12px;padding:10px 14px;margin-bottom:14px;font-size:13px;color:#7a5c42;line-height:1.8}
   .salary-box{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:12px 14px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center}
   .salary-amt{font-size:22px;font-weight:800;color:#15803d}
@@ -23,12 +23,12 @@
   table{width:100%;border-collapse:collapse;font-size:12px}
   th{padding:6px 8px;text-align:left;color:#a07850;font-weight:700;white-space:nowrap;border-bottom:2px solid #e8ddd4;background:#f8f4f0}
   td{padding:6px 8px;border-bottom:1px solid #f0e8e0;white-space:nowrap;color:#3d2c1e}
-  .scroll-table{max-height:200px;overflow-y:auto;border-radius:10px;border:1px solid #f0e8e0}
+  .scroll-table{max-height:220px;overflow-y:auto;border-radius:10px;border:1px solid #f0e8e0}
   .success-card{text-align:center;padding:44px 24px}
   .period-tabs{display:flex;gap:4px;margin-bottom:12px;background:#f8f4f0;padding:3px;border-radius:10px}
   .period-tab{flex:1;padding:8px;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;background:transparent;color:#a07850}
   .period-tab.active{background:#3d2c1e;color:#fff}
-  .spinner{display:inline-block;width:18px;height:18px;border:2px solid #e8ddd4;border-top-color:#3d2c1e;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle}
+  .spinner{display:inline-block;width:20px;height:20px;border:2px solid #e8ddd4;border-top-color:#3d2c1e;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle}
   @keyframes spin{to{transform:rotate(360deg)}}
 </style>
 </head>
@@ -47,9 +47,9 @@ const firebaseConfig = {
   appId:             "1:990981947127:web:86d4ecd4e7ec2c1aa7ddf2"
 };
 
-const fapp = initializeApp(firebaseConfig);
-const db   = getFirestore(fapp);
-const DAYS = ["Ня","Да","Мя","Лх","Пү","Ба","Бя"];
+const fapp=initializeApp(firebaseConfig);
+const db=getFirestore(fapp);
+const DAYS=["Ня","Да","Мя","Лх","Пү","Ба","Бя"];
 
 function getToday(){
   const d=new Date();
@@ -61,7 +61,7 @@ function getNow(){
   return`${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`;
 }
 
-// ── Цаг тооцоолол — хуучин болон шинэ бүтэц хоёуланг дэмжинэ ──
+// Хуучин болон шинэ бүтэц хоёуланг дэмжинэ
 function calcH(i,o){
   if(!i||!o)return 0;
   const[ih,im]=i.split(":").map(Number);
@@ -69,25 +69,28 @@ function calcH(i,o){
   return Math.max(0,(oh*60+om-ih*60-im)/60);
 }
 function totalH(r){
-  // Хуучин бүтэц: morningIn/morningOut/eveningIn/eveningOut
-  // Шинэ бүтэц: inTime/outTime
-  if(r.morningIn||r.eveningIn){
+  // Хуучин: morningIn/morningOut + eveningIn/eveningOut
+  if(r.morningIn||r.eveningIn||r.morningOut||r.eveningOut){
     return calcH(r.morningIn,r.morningOut)+calcH(r.eveningIn,r.eveningOut);
   }
+  // Шинэ: inTime/outTime
   return calcH(r.inTime,r.outTime);
 }
+function getInTime(r){ return r.morningIn||r.eveningIn||r.inTime||null; }
+function getOutTime(r){ return r.morningOut||r.eveningOut||r.outTime||null; }
 function fmtH(h){const hr=Math.floor(h),m=Math.round((h-hr)*60);return m?`${hr}ц ${m}мин`:`${hr}ц`;}
 
+// 15 хоногийн үе
 function getPeriods(fullDate){
   const[y,m]=fullDate.split("-").map(Number);
   const last=new Date(y,m,0).getDate();
   const mm=String(m).padStart(2,"0");
   return[
     {label:`${m}/1—${m}/15`, start:`${y}-${mm}-01`, end:`${y}-${mm}-15`},
-    {label:`${m}/16—${m}/${last}`, start:`${y}-${mm}-16`, end:`${y}-${mm}-${last}`},
+    {label:`${m}/16—${m}/${last}`, start:`${y}-${mm}-16`, end:`${y}-${mm}-${String(last).padStart(2,"0")}`},
   ];
 }
-function getCurrentPeriodIdx(){return new Date().getDate()<=15?0:1;}
+function getCurPeriodIdx(){return new Date().getDate()<=15?0:1;}
 
 async function getCfg(){
   try{const s=await getDoc(doc(db,"config","main"));return s.exists()?s.data():{title:"Цэс",hourlyRate:7000};}
@@ -100,13 +103,19 @@ async function getTodayRec(name){
 }
 async function getPeriodRecs(name,start,end){
   try{
-    const q=query(collection(db,"attendance"),where("fullDate",">=",start),where("fullDate","<=",end),where("name","==",name),orderBy("fullDate"));
+    const q=query(
+      collection(db,"attendance"),
+      where("fullDate",">=",start),
+      where("fullDate","<=",end),
+      where("name","==",name),
+      orderBy("fullDate")
+    );
     const s=await getDocs(q);
     return s.docs.map(d=>({id:d.id,...d.data()}));
   }catch(e){console.error(e);return[];}
 }
 
-// ── Цаг бүртгэх — хуучин талбарын нэрийг хэвээр хадгална ──
+// Ирлээ/Явлаа — morningIn/morningOut талбарт хадгална (хуучин бүтэцтэй нийцнэ)
 async function doCheckIn(name,type){
   const t=getToday();
   const id=`${t.fullDate}__${name}`;
@@ -115,42 +124,16 @@ async function doCheckIn(name,type){
   const snap=await getDoc(ref);
   const existing=snap.exists()?snap.data():{date:t.date,day:t.day,name,fullDate:t.fullDate};
   const update={...existing};
-  // morningIn/morningOut/eveningIn/eveningOut хэвээр хадгална
-  if(type==="mi") update.morningIn=now;
-  else if(type==="mo") update.morningOut=now;
-  else if(type==="ei") update.eveningIn=now;
-  else if(type==="eo") update.eveningOut=now;
+  if(type==="in"){
+    // Өглөөний ирсэн байвал оройн ирсэн болгоно, эс бол өглөөний
+    if(!update.morningIn) update.morningIn=now;
+    else if(!update.eveningIn) update.eveningIn=now;
+  } else {
+    if(update.morningIn&&!update.morningOut) update.morningOut=now;
+    else if(update.eveningIn&&!update.eveningOut) update.eveningOut=now;
+  }
   await setDoc(ref,update);
   return now;
-}
-
-// Өнөөдрийн товчнуудын байдал
-function getBtnState(r){
-  // Хуучин бүтэц (morningIn гэх мэт) болон шинэ бүтэц (inTime) хоёуланг шалгана
-  const hasOldData=r.morningIn||r.morningOut||r.eveningIn||r.eveningOut;
-  if(hasOldData){
-    return{
-      mi:!!r.morningIn, mo:!!r.morningOut,
-      ei:!!r.eveningIn, eo:!!r.eveningOut,
-      hasMorningIn:!!r.morningIn, hasMorningOut:!!r.morningOut,
-      hasEveningIn:!!r.eveningIn,
-    };
-  }
-  // Шинэ бүтэц → morningIn/morningOut гэж хөрвүүлнэ
-  return{
-    mi:!!r.inTime, mo:!!r.outTime,
-    ei:false, eo:false,
-    hasMorningIn:!!r.inTime, hasMorningOut:!!r.outTime,
-    hasEveningIn:false,
-  };
-}
-
-// Дэлгэцэнд харуулах цагийн утга
-function displayTimes(r){
-  if(r.morningIn||r.eveningIn||r.morningOut||r.eveningOut){
-    return{mIn:r.morningIn,mOut:r.morningOut,eIn:r.eveningIn,eOut:r.eveningOut};
-  }
-  return{mIn:r.inTime,mOut:r.outTime,eIn:null,eOut:null};
 }
 
 let ST={
@@ -176,12 +159,11 @@ async function render(){
   const period=periods[periodIdx];
 
   if(checkedIn){
-    const labels={mi:"🌅 Өглөө ирсэн",mo:"🌤 Өглөө явсан",ei:"🌆 Орой ирсэн",eo:"🌙 Орой явсан"};
     app.innerHTML=`<div class="success-card">
-      <div style="font-size:52px">✅</div>
+      <div style="font-size:56px">${checkedIn.type==="in"?"✅":"👋"}</div>
       <div style="font-size:22px;font-weight:800;color:#3d2c1e;margin:10px 0 6px">${checkedIn.name}</div>
-      <div style="font-size:17px;font-weight:700;color:#a07850">${labels[checkedIn.type]}</div>
-      <div style="font-size:14px;color:#c8a882;margin-top:4px">${checkedIn.time}</div>
+      <div style="font-size:18px;font-weight:700;color:#a07850">${checkedIn.type==="in"?"Ирлээ":"Явлаа"}</div>
+      <div style="font-size:15px;color:#c8a882;margin-top:4px">${checkedIn.time}</div>
     </div>`;
     return;
   }
@@ -200,62 +182,66 @@ async function render(){
     return;
   }
 
-  // checkin screen
+  // Өнөөдрийн байдал
   const r=todayRec;
-  const bs=getBtnState(r);
-  const dt=displayTimes(r);
+  const inTime=getInTime(r);
+  const outTime=getOutTime(r);
+  // Ирлээ: morningIn байхгүй эсвэл morningOut байгаа ч eveningIn байхгүй
+  const canIn=!r.morningIn||(r.morningIn&&r.morningOut&&!r.eveningIn);
+  const canOut=(r.morningIn&&!r.morningOut)||(r.eveningIn&&!r.eveningOut);
+  const allDone=r.morningIn&&r.morningOut&&r.eveningIn&&r.eveningOut;
+
+  // Хүснэгт
   const totalHrs=periodRecs.reduce((s,rec)=>s+totalH(rec),0);
   const salary=Math.round(totalHrs*HOURLY);
-  const days=periodRecs.filter(rec=>rec.morningIn||rec.eveningIn||rec.inTime).length;
+  const days=periodRecs.filter(rec=>getInTime(rec)).length;
 
   const tableRows=periodRecs.length===0
-    ?`<tr><td colspan="4" style="text-align:center;color:#aaa;padding:12px">Бүртгэл байхгүй</td></tr>`
+    ?`<tr><td colspan="3" style="text-align:center;color:#aaa;padding:12px">Бүртгэл байхгүй</td></tr>`
     :periodRecs.map((rec,i)=>{
       const h=totalH(rec);
-      const dt2=displayTimes(rec);
+      const ri=getInTime(rec);
+      const ro=getOutTime(rec);
       return`<tr style="background:${i%2===0?"#fff":"#faf8f6"}">
         <td>${rec.date||""} ${rec.day||""}</td>
-        <td>${dt2.mIn||"—"} → ${dt2.mOut||"—"}</td>
-        <td>${dt2.eIn||"—"} → ${dt2.eOut||"—"}</td>
+        <td>${ri||"—"} → ${ro||"—"}</td>
         <td style="font-weight:600;color:#15803d">${h>0?fmtH(h):"—"}</td>
       </tr>`;
     }).join("");
 
   app.innerHTML=`
     <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px">
-      <div><h1 style="font-size:18px">👤 ${name}</h1><p class="sub" style="margin-bottom:0">${today.date} · ${today.day}</p></div>
+      <div>
+        <h1 style="font-size:20px">👤 ${name}</h1>
+        <p class="sub" style="margin-bottom:0">${today.date} · ${today.day}</p>
+      </div>
       <button class="btn-ghost" id="backBtn">← Буцах</button>
     </div>
 
     <div class="status-box">
-      <strong>Өнөөдөр:</strong><br>
-      🌅 Өглөө: ${dt.mIn||"—"} → ${dt.mOut||"—"}<br>
-      🌆 Орой: ${dt.eIn||"—"} → ${dt.eOut||"—"}
+      <strong>Өнөөдөр:</strong>
+      Ирсэн: <strong>${inTime||"—"}</strong> &nbsp;·&nbsp; Явсан: <strong>${outTime||"—"}</strong>
     </div>
 
     <div class="grid2">
-      <button class="chk-btn" id="btnMI"
-        style="background:${bs.mi?"#f0ece8":"#22c55e"};color:${bs.mi?"#b0a090":"#fff"};cursor:${bs.mi?"not-allowed":"pointer"}"
-        ${bs.mi?"disabled":""}>🌅 Өглөө<br>ирлээ${bs.mi?" ✓":""}</button>
-
-      <button class="chk-btn" id="btnMO"
-        style="background:${!bs.hasMorningIn||bs.mo?"#f0ece8":"#f59e0b"};color:${!bs.hasMorningIn||bs.mo?"#b0a090":"#fff"};cursor:${!bs.hasMorningIn||bs.mo?"not-allowed":"pointer"}"
-        ${!bs.hasMorningIn||bs.mo?"disabled":""}>🌤 Өглөө<br>явлаа${bs.mo?" ✓":""}</button>
-
-      <button class="chk-btn" id="btnEI"
-        style="background:${bs.ei?"#f0ece8":"#3b82f6"};color:${bs.ei?"#b0a090":"#fff"};cursor:${bs.ei?"not-allowed":"pointer"}"
-        ${bs.ei?"disabled":""}>🌆 Орой<br>ирлээ${bs.ei?" ✓":""}</button>
-
-      <button class="chk-btn" id="btnEO"
-        style="background:${!bs.hasEveningIn||bs.eo?"#f0ece8":"#8b5cf6"};color:${!bs.hasEveningIn||bs.eo?"#b0a090":"#fff"};cursor:${!bs.hasEveningIn||bs.eo?"not-allowed":"pointer"}"
-        ${!bs.hasEveningIn||bs.eo?"disabled":""}>🌙 Орой<br>явлаа${bs.eo?" ✓":""}</button>
+      <button class="chk-btn" id="btnIn"
+        style="background:${!canIn?"#f0ece8":"#22c55e"};color:${!canIn?"#b0a090":"#fff"};cursor:${!canIn?"not-allowed":"pointer"}"
+        ${!canIn?"disabled":""}>
+        ✅ Ирлээ${r.morningIn?" ✓":""}
+      </button>
+      <button class="chk-btn" id="btnOut"
+        style="background:${!canOut?"#f0ece8":"#ef4444"};color:${!canOut?"#b0a090":"#fff"};cursor:${!canOut?"not-allowed":"pointer"}"
+        ${!canOut?"disabled":""}>
+        👋 Явлаа${r.morningOut?" ✓":""}
+      </button>
     </div>
 
-    ${loading?`<div style="text-align:center;padding:6px"><span class="spinner"></span></div>`:""}
+    ${loading?`<div style="text-align:center;padding:8px"><span class="spinner"></span></div>`:""}
 
     <hr/>
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-      <label style="margin-bottom:0">Миний бүртгэл — цалин</label>
+
+    <div style="font-size:11px;font-weight:700;color:#a07850;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">
+      Миний бүртгэл — цалин
     </div>
     <div class="period-tabs">
       <button class="period-tab ${periodIdx===0?"active":""}" id="tab0">${periods[0].label}</button>
@@ -270,7 +256,7 @@ async function render(){
     </div>
     <div class="scroll-table">
       <table>
-        <thead><tr><th>Огноо</th><th>Өглөө</th><th>Орой</th><th>Цаг</th></tr></thead>
+        <thead><tr><th>Огноо</th><th>Ирсэн → Явсан</th><th>Цаг/Цалин</th></tr></thead>
         <tbody>${tableRows}</tbody>
       </table>
     </div>`;
@@ -279,8 +265,7 @@ async function render(){
 
   async function switchPeriod(idx){
     ST.periodIdx=idx;ST.loading=true;render();
-    const p=periods[idx];
-    ST.periodRecs=await getPeriodRecs(ST.name,p.start,p.end);
+    ST.periodRecs=await getPeriodRecs(ST.name,periods[idx].start,periods[idx].end);
     ST.loading=false;render();
   }
   document.getElementById("tab0").onclick=()=>switchPeriod(0);
@@ -298,10 +283,8 @@ async function render(){
     }catch(e){ST.loading=false;showToast("Алдаа: "+e.message,"#ef4444");render();}
   }
 
-  if(!bs.mi) document.getElementById("btnMI").onclick=()=>handleBtn("mi");
-  if(bs.hasMorningIn&&!bs.mo) document.getElementById("btnMO").onclick=()=>handleBtn("mo");
-  if(!bs.ei) document.getElementById("btnEI").onclick=()=>handleBtn("ei");
-  if(bs.hasEveningIn&&!bs.eo) document.getElementById("btnEO").onclick=()=>handleBtn("eo");
+  if(canIn) document.getElementById("btnIn").onclick=()=>handleBtn("in");
+  if(canOut) document.getElementById("btnOut").onclick=()=>handleBtn("out");
 }
 
 async function confirmName(){
@@ -310,7 +293,7 @@ async function confirmName(){
   ST.name=val;ST.screen="checkin";ST.loading=true;render();
   const today=getToday();
   const periods=getPeriods(today.fullDate);
-  ST.periodIdx=getCurrentPeriodIdx();
+  ST.periodIdx=getCurPeriodIdx();
   const p=periods[ST.periodIdx];
   const[tr,pr]=await Promise.all([getTodayRec(val),getPeriodRecs(val,p.start,p.end)]);
   ST.todayRec=tr;ST.periodRecs=pr;ST.loading=false;
