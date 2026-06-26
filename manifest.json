@@ -1,0 +1,17 @@
+{
+  "name": "Ирц бүртгэл",
+  "short_name": "Ирц",
+  "description": "Ажилтны ирц бүртгэх систем",
+  "start_url": "/Cafe-Capsule/ajiltan.html",
+  "display": "standalone",
+  "background_color": "#f8f0e8",
+  "theme_color": "#3d2c1e",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "https://api.dicebear.com/7.x/icons/svg?seed=coffee&backgroundColor=3d2c1e",
+      "sizes": "192x192",
+      "type": "image/svg+xml"
+    }
+  ]
+}
