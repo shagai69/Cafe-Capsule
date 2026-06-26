@@ -4,6 +4,15 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>Ажилтан — Ирц бүртгэл</title>
+
+<!-- PWA -->
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+<meta name="apple-mobile-web-app-title" content="Ирц бүртгэл"/>
+<meta name="theme-color" content="#3d2c1e"/>
+<link rel="manifest" href="manifest.json"/>
+
 <style>
   *{box-sizing:border-box;margin:0;padding:0}
   body{min-height:100vh;background:linear-gradient(135deg,#f8f0e8,#efe6da);font-family:'Segoe UI',system-ui,sans-serif;display:flex;align-items:center;justify-content:center;padding:16px}
@@ -30,10 +39,13 @@
   .period-tab.active{background:#3d2c1e;color:#fff}
   .spinner{display:inline-block;width:20px;height:20px;border:2px solid #e8ddd4;border-top-color:#3d2c1e;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle}
   @keyframes spin{to{transform:rotate(360deg)}}
+  .install-bar{background:#3d2c1e;color:#fff;padding:10px 16px;border-radius:12px;display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;font-size:13px}
+  .install-btn{background:#fff;color:#3d2c1e;border:none;border-radius:8px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer}
 </style>
 </head>
 <body>
 <div class="card" id="app"><div style="text-align:center;padding:40px"><span class="spinner"></span></div></div>
+
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFirestore, doc, getDoc, setDoc, collection, query, where, getDocs, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
@@ -46,6 +58,20 @@ const firebaseConfig = {
   messagingSenderId: "990981947127",
   appId:             "1:990981947127:web:86d4ecd4e7ec2c1aa7ddf2"
 };
+
+// Telegram
+const TG_TOKEN   = "8684701151:AAEGEfkbiypPxEAAIZ_WEwiVkcoqRUVG5mY";
+const TG_CHAT_ID = "8903339382";
+
+async function sendTelegram(text){
+  try{
+    await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`,{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({chat_id:TG_CHAT_ID, text, parse_mode:"HTML"})
+    });
+  }catch(e){console.log("Telegram error:",e);}
+}
 
 const fapp=initializeApp(firebaseConfig);
 const db=getFirestore(fapp);
@@ -60,8 +86,6 @@ function getNow(){
   const d=new Date();
   return`${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`;
 }
-
-// Хуучин болон шинэ бүтэц хоёуланг дэмжинэ
 function calcH(i,o){
   if(!i||!o)return 0;
   const[ih,im]=i.split(":").map(Number);
@@ -69,25 +93,21 @@ function calcH(i,o){
   return Math.max(0,(oh*60+om-ih*60-im)/60);
 }
 function totalH(r){
-  // Хуучин: morningIn/morningOut + eveningIn/eveningOut
-  if(r.morningIn||r.eveningIn||r.morningOut||r.eveningOut){
+  if(r.morningIn||r.eveningIn||r.morningOut||r.eveningOut)
     return calcH(r.morningIn,r.morningOut)+calcH(r.eveningIn,r.eveningOut);
-  }
-  // Шинэ: inTime/outTime
   return calcH(r.inTime,r.outTime);
 }
-function getInTime(r){ return r.morningIn||r.eveningIn||r.inTime||null; }
-function getOutTime(r){ return r.morningOut||r.eveningOut||r.outTime||null; }
+function getInTime(r){return r.morningIn||r.eveningIn||r.inTime||null;}
+function getOutTime(r){return r.morningOut||r.eveningOut||r.outTime||null;}
 function fmtH(h){const hr=Math.floor(h),m=Math.round((h-hr)*60);return m?`${hr}ц ${m}мин`:`${hr}ц`;}
 
-// 15 хоногийн үе
 function getPeriods(fullDate){
   const[y,m]=fullDate.split("-").map(Number);
   const last=new Date(y,m,0).getDate();
   const mm=String(m).padStart(2,"0");
   return[
-    {label:`${m}/1—${m}/15`, start:`${y}-${mm}-01`, end:`${y}-${mm}-15`},
-    {label:`${m}/16—${m}/${last}`, start:`${y}-${mm}-16`, end:`${y}-${mm}-${String(last).padStart(2,"0")}`},
+    {label:`${m}/1—${m}/15`,start:`${y}-${mm}-01`,end:`${y}-${mm}-15`},
+    {label:`${m}/16—${m}/${last}`,start:`${y}-${mm}-16`,end:`${y}-${mm}-${String(last).padStart(2,"0")}`},
   ];
 }
 function getCurPeriodIdx(){return new Date().getDate()<=15?0:1;}
@@ -103,19 +123,12 @@ async function getTodayRec(name){
 }
 async function getPeriodRecs(name,start,end){
   try{
-    const q=query(
-      collection(db,"attendance"),
-      where("fullDate",">=",start),
-      where("fullDate","<=",end),
-      where("name","==",name),
-      orderBy("fullDate")
-    );
+    const q=query(collection(db,"attendance"),where("fullDate",">=",start),where("fullDate","<=",end),where("name","==",name),orderBy("fullDate"));
     const s=await getDocs(q);
     return s.docs.map(d=>({id:d.id,...d.data()}));
   }catch(e){console.error(e);return[];}
 }
 
-// Ирлээ/Явлаа — morningIn/morningOut талбарт хадгална (хуучин бүтэцтэй нийцнэ)
 async function doCheckIn(name,type){
   const t=getToday();
   const id=`${t.fullDate}__${name}`;
@@ -125,7 +138,6 @@ async function doCheckIn(name,type){
   const existing=snap.exists()?snap.data():{date:t.date,day:t.day,name,fullDate:t.fullDate};
   const update={...existing};
   if(type==="in"){
-    // Өглөөний ирсэн байвал оройн ирсэн болгоно, эс бол өглөөний
     if(!update.morningIn) update.morningIn=now;
     else if(!update.eveningIn) update.eveningIn=now;
   } else {
@@ -133,8 +145,23 @@ async function doCheckIn(name,type){
     else if(update.eveningIn&&!update.eveningOut) update.eveningOut=now;
   }
   await setDoc(ref,update);
+
+  // Telegram мэдэгдэл
+  const emoji = type==="in" ? "✅" : "👋";
+  const action = type==="in" ? "Ирлээ" : "Явлаа";
+  const msg = `${emoji} <b>${name}</b> ${action}\n🕐 ${now} · 📅 ${t.date} ${t.day}`;
+  await sendTelegram(msg);
+
   return now;
 }
+
+// PWA install
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', e=>{
+  e.preventDefault();
+  deferredPrompt = e;
+  render();
+});
 
 let ST={
   screen:"name",name:"",cfg:{title:"Цэс",hourlyRate:7000},
@@ -156,7 +183,6 @@ async function render(){
   const HOURLY=cfg.hourlyRate||7000;
   const today=getToday();
   const periods=getPeriods(today.fullDate);
-  const period=periods[periodIdx];
 
   if(checkedIn){
     app.innerHTML=`<div class="success-card">
@@ -164,12 +190,20 @@ async function render(){
       <div style="font-size:22px;font-weight:800;color:#3d2c1e;margin:10px 0 6px">${checkedIn.name}</div>
       <div style="font-size:18px;font-weight:700;color:#a07850">${checkedIn.type==="in"?"Ирлээ":"Явлаа"}</div>
       <div style="font-size:15px;color:#c8a882;margin-top:4px">${checkedIn.time}</div>
+      <div style="font-size:12px;color:#22c55e;margin-top:8px">📨 Админд мэдэгдэл илгээгдлээ</div>
     </div>`;
     return;
   }
 
   if(screen==="name"){
+    const installBar = deferredPrompt
+      ? `<div class="install-bar">
+          <span>📱 Апп болгож суулгах</span>
+          <button class="install-btn" id="installBtn">Суулгах</button>
+         </div>`
+      : "";
     app.innerHTML=`
+      ${installBar}
       <h1>☕ ${cfg.title}</h1>
       <p class="sub">${today.date} · ${today.day}</p>
       <label>Нэрээ бичнэ үү</label>
@@ -179,19 +213,23 @@ async function render(){
     inp.focus();
     inp.onkeydown=e=>{if(e.key==="Enter")confirmName();};
     document.getElementById("nextBtn").onclick=confirmName;
+    document.getElementById("installBtn")?.addEventListener("click",async()=>{
+      if(!deferredPrompt)return;
+      deferredPrompt.prompt();
+      const{outcome}=await deferredPrompt.userChoice;
+      if(outcome==="accepted"){deferredPrompt=null;showToast("Апп суулгагдлаа ✓");}
+      render();
+    });
     return;
   }
 
-  // Өнөөдрийн байдал
+  // checkin screen
   const r=todayRec;
   const inTime=getInTime(r);
   const outTime=getOutTime(r);
-  // Ирлээ: morningIn байхгүй эсвэл morningOut байгаа ч eveningIn байхгүй
   const canIn=!r.morningIn||(r.morningIn&&r.morningOut&&!r.eveningIn);
   const canOut=(r.morningIn&&!r.morningOut)||(r.eveningIn&&!r.eveningOut);
-  const allDone=r.morningIn&&r.morningOut&&r.eveningIn&&r.eveningOut;
 
-  // Хүснэгт
   const totalHrs=periodRecs.reduce((s,rec)=>s+totalH(rec),0);
   const salary=Math.round(totalHrs*HOURLY);
   const days=periodRecs.filter(rec=>getInTime(rec)).length;
@@ -211,38 +249,24 @@ async function render(){
 
   app.innerHTML=`
     <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px">
-      <div>
-        <h1 style="font-size:20px">👤 ${name}</h1>
-        <p class="sub" style="margin-bottom:0">${today.date} · ${today.day}</p>
-      </div>
+      <div><h1 style="font-size:20px">👤 ${name}</h1><p class="sub" style="margin-bottom:0">${today.date} · ${today.day}</p></div>
       <button class="btn-ghost" id="backBtn">← Буцах</button>
     </div>
-
     <div class="status-box">
       <strong>Өнөөдөр:</strong>
       Ирсэн: <strong>${inTime||"—"}</strong> &nbsp;·&nbsp; Явсан: <strong>${outTime||"—"}</strong>
     </div>
-
     <div class="grid2">
       <button class="chk-btn" id="btnIn"
         style="background:${!canIn?"#f0ece8":"#22c55e"};color:${!canIn?"#b0a090":"#fff"};cursor:${!canIn?"not-allowed":"pointer"}"
-        ${!canIn?"disabled":""}>
-        ✅ Ирлээ${r.morningIn?" ✓":""}
-      </button>
+        ${!canIn?"disabled":""}>✅ Ирлээ${inTime?" ✓":""}</button>
       <button class="chk-btn" id="btnOut"
         style="background:${!canOut?"#f0ece8":"#ef4444"};color:${!canOut?"#b0a090":"#fff"};cursor:${!canOut?"not-allowed":"pointer"}"
-        ${!canOut?"disabled":""}>
-        👋 Явлаа${r.morningOut?" ✓":""}
-      </button>
+        ${!canOut?"disabled":""}>👋 Явлаа${outTime?" ✓":""}</button>
     </div>
-
     ${loading?`<div style="text-align:center;padding:8px"><span class="spinner"></span></div>`:""}
-
     <hr/>
-
-    <div style="font-size:11px;font-weight:700;color:#a07850;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">
-      Миний бүртгэл — цалин
-    </div>
+    <div style="font-size:11px;font-weight:700;color:#a07850;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Миний бүртгэл — цалин</div>
     <div class="period-tabs">
       <button class="period-tab ${periodIdx===0?"active":""}" id="tab0">${periods[0].label}</button>
       <button class="period-tab ${periodIdx===1?"active":""}" id="tab1">${periods[1].label}</button>
@@ -256,7 +280,7 @@ async function render(){
     </div>
     <div class="scroll-table">
       <table>
-        <thead><tr><th>Огноо</th><th>Ирсэн → Явсан</th><th>Цаг/Цалин</th></tr></thead>
+        <thead><tr><th>Огноо</th><th>Ирсэн → Явсан</th><th>Цаг</th></tr></thead>
         <tbody>${tableRows}</tbody>
       </table>
     </div>`;
